@@ -1,0 +1,112 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Malaysia Domestic Water Consumption per 1,000 People (2022)",
+  "width": 1000,
+  "height": 450,
+
+  "projection": {
+    "type": "mercator",
+    "center": [109.58, 4],
+    "scale": 2850
+  },
+
+  "layer": [
+    {
+      "data": { "graticule": { "step": [1, 1] } },
+      "mark": { "type": "geoshape", "fill": null, "stroke": "lightgray" }
+    },
+
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/YeeXuanNg/FIT3179-HomeworkWeek9/refs/heads/main/Malaysia_States.json",
+        "format": { "type": "topojson", "feature": "my" }
+      },
+
+      "transform": [
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "url": "https://raw.githubusercontent.com/YeeXuanNg/FIT3179-HomeworkWeek9/refs/heads/main/Water_Consumption.csv",
+              "format": {
+                "type": "csv",
+                "parse": { "value": "number" }
+              }
+            },
+            "key": "state",
+            "fields": ["value"]
+          }
+        },
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "url": "https://raw.githubusercontent.com/YeeXuanNg/FIT3179-HomeworkWeek9/refs/heads/main/Population_State.csv",
+              "format": { "type": "csv" }
+            },
+            "key": "state",
+            "fields": ["population"]
+          }
+        },
+        {
+          "calculate": "datum.value / datum.population * 1000",
+          "as": "water_per_1k"
+        },
+        {
+          "calculate": "datum.value == null || datum.value == '' ? 'Data is not available' : format(datum.value,'')",
+          "as": "value_display"
+        },
+        {
+          "calculate": "datum['water_per_1k'] == 0 || datum['water_per_1k'] == null ? 'Data is not available' : format(datum['water_per_1k'],'.2f')",
+          "as": "consumption_display"
+        },
+        {
+          "calculate": "datum.value != ''",
+          "as": "hasData"
+        }
+      ],
+
+      "mark": { "type": "geoshape", "stroke": "white" },
+
+      "encoding": {
+        "color": {
+          "condition": {
+            "test": "datum.hasData",
+            "field": "water_per_1k",
+            "type": "quantitative",
+            "scale": { "scheme": "blues" },
+            "legend": { "title": "MLD per 1,000 people" }
+          },
+          "value": "#808080"   
+        },
+        "tooltip": [
+          { "field": "properties.name", "title": "State" },
+          { "field": "value_display", "title": "Total Domestic 2022 (MLD)" },
+          { "field": "population", "title": "Population 2022" },
+          { "field": "consumption_display", "title": "MLD per 1,000 people" }
+        ]
+      }
+    },
+    {
+      "data": {
+        "values": [
+          {"lon": 101.5, "lat": 3.5, "text": "Highest consumption: Selangor"},
+          {"lon": 102.5, "lat": 6.0, "text": "Lowest consumption: Kelantan"}
+        ]
+      },
+      "mark": {
+        "type": "text",
+        "align": "center",
+        "baseline": "middle",
+        "fontSize": 10,
+        "fontWeight": "bold",
+        "color": "black"
+      },
+      "encoding": {
+        "longitude": {"field": "lon", "type": "quantitative"},
+        "latitude": {"field": "lat", "type": "quantitative"},
+        "text": {"field": "text"}
+      }
+    }
+  ]
+}
